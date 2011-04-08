@@ -2,11 +2,33 @@ use strict;
 use warnings;
 
 my $file = shift @ARGV;
-my $maxDepth = shift @ARGV;
+my $type = shift @ARGV;
+$type = defined($type) ? $type : "";
 
-if(not defined($maxDepth))
+if(not defined($file))
 {
-	$maxDepth =1 ;
+	print "usage: \n";
+	print "\tperl ledger.pl [ledger file] balance  [max depth]\n";
+	print "\tperl ledger.pl [ledger file] register [account name]\n\n";
+	exit;
+}
+
+print "\n\n";
+
+if( lc(substr($type, 0, 1)) =~ /r/)
+{
+	$type = "register";
+}
+else
+{
+	$type = "balance";
+}
+
+my $param = shift @ARGV;
+
+if((not defined($param)) && $type eq "balance")
+{
+	$param =1 ;
 }
 
 my $readEntries = [];
@@ -54,7 +76,6 @@ while(my $line = <IN>)
 			}
 		}
 		push(@$readEntries, [$date, $desc, $applyName, $otherName, $amount]);
-		#print "$date\t$desc\t$applyName\t$otherName\t$amount\n";
 	}
 }
 close IN;
@@ -98,10 +119,14 @@ foreach my $entry (@sortedEntries)
 	}
 }
 
-
-printBalances($accounts, $maxDepth);
-
-printRegister($accounts, "Assets:Cash");
+if($type eq "balance")
+{
+	printBalances($accounts, $param);
+}
+else
+{
+	printRegister($accounts, $param);
+}
 
 exit;
 
@@ -123,7 +148,7 @@ sub printRegister
 			my $allEntries = $accounts->{"LEAF_NODE_ENTRIES"};
 			foreach my $ent (@$allEntries)
 			{
-				printf("%10s %30s %25s %20.2f %20.2f\n", $ent->[0], substr($ent->[1],0,30), $ent->[2], $ent->[3]/$floatComp, $ent->[4]/$floatComp)
+				printf("%10s %30s    %-25s %20.2f %20.2f\n", $ent->[0], substr($ent->[1],0,30), $ent->[2], $ent->[3]/$floatComp, $ent->[4]/$floatComp)
 			}
 		}
 	}
